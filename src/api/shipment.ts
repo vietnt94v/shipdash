@@ -1,11 +1,43 @@
 import api from './index';
-import type { Shipment } from '../types/shipment';
+import type { Shipment, ShipmentStatus } from '../types/shipment';
 
-export const getShipments = async (page: number, page_size: number) => {
-  const response = await api.get(`/shipments?_page=${page}&_per_page=${page_size}`);
+export const getShipments = async (status: ShipmentStatus, page: number, page_size: number) => {
+  const response = await api.get('/shipments', {
+    params: {
+      status,
+      _page: page,
+      _per_page: page_size,
+    },
+  });
   return response.data;
 };
 
+export const searchShipments = async (
+  status: ShipmentStatus,
+  page: number,
+  page_size: number,
+  search: string,
+) => {
+  const trimmed = search.trim();
+  const where =
+    trimmed === ''
+      ? { status: { eq: status } }
+      : {
+          status: { eq: status },
+          or: [
+            { label: { contains: trimmed } },
+            { client_name: { contains: trimmed } },
+          ],
+        };
+  const response = await api.get('/shipments', {
+    params: {
+      _where: JSON.stringify(where),
+      _page: page,
+      _per_page: page_size,
+    },
+  });
+  return response.data;
+};
 export const getShipmentById = async (id: string) => {
   const response = await api.get(`/shipments/${id}`);
   return response.data;
