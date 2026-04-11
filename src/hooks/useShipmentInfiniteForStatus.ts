@@ -10,6 +10,7 @@ export function useShipmentInfiniteForStatus(
 ) {
   return useInfiniteQuery({
     queryKey: ['shipments', mode, searchQuery, status],
+    refetchOnWindowFocus: false,
     queryFn: ({ pageParam, signal }) => {
       const page = pageParam as number;
       if (mode === 'browse') {
