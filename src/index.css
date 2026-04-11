@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+:root {
+  --header-height: 60px;
+}
+
 @layer components {
   .input-base {
     @apply w-full bg-white border border-gray-200 rounded-md px-2.5 py-1.5 transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20;
