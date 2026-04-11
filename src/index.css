@@ -6,11 +6,21 @@
 
 @layer components {
   .input-base {
-    @apply w-full bg-white border border-gray-200 rounded-md px-2.5 py-1.5 transition-colors outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20;
+    @apply w-full bg-white border border-gray-300 rounded-md px-2 py-1 transition-colors
+      outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20
+      read-only:cursor-default read-only:bg-[#f5f4ed] read-only:text-[#6b6b6b] read-only:focus:border-gray-300
+      read-only:focus:ring-0;
+  }
+
+  .select-base {
+    @apply w-full bg-white border border-gray-300 rounded-md px-2 py-1 transition-colors
+      outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20
+      read-only:cursor-default read-only:focus:border-gray-300
+      read-only:focus:ring-0;
   }
 
   .button-base {
-    @apply bg-blue-500 text-white px-4 py-2 rounded-md transition-colors hover:bg-blue-600 cursor-pointer;
+    @apply bg-blue-500/50 text-white border border-gray-300 rounded-md px-2 py-1;
   }
 
   .field-label {

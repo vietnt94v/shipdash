@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useShipmentStore } from '../../store';
-import { getShipmentById, updateShipment } from '../../api/shipment';
+import { getShipmentById, updateShipment, deleteShipment } from '../../api/shipment';
 import type { Shipment, ShipmentStatus } from '../../types/shipment';
 import { getAssignments as fetchAssignments, getAssignmentById } from '../../api/assignment';
 import type { Assignment } from '../../types/assignment';
-import Dropdown from './Dropdown';
+import Dropdown from '../ui/Dropdown';
 
 const STATUSES: ShipmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 const ASSIGN_LIST_SIZE = 100;
@@ -127,6 +127,17 @@ const ShipmentDetail = () => {
     }
   };
 
+  const onDeleteShipment = async (id: string) => {
+    if (!id) {
+      return;
+    }
+    if (confirm('Are you sure you want to delete this shipment?')) {
+      await deleteShipment(id);
+      await queryClient.invalidateQueries({ queryKey: ['shipments'] });
+      setShipmentSelectedId('');
+    }
+  };
+
   if (!shipmentSelectedId || !shipmentSelected) {
     return null;
   }
@@ -138,18 +149,37 @@ const ShipmentDetail = () => {
           <div className="text-lg font-bold">{shipmentSelected.label}</div>
           <div>{shipmentSelected.client_name}</div>
         </div>
-        <div>{shipmentSelected.status}</div>
+        <div className="flex gap-3">
+          <button type="button" className="button-base">
+            {shipmentSelected.status}
+          </button>
+          <button
+            type="button"
+            className="button-base text-red-500"
+            onClick={() => onDeleteShipment(shipmentSelected.id)}
+          >
+            Delete
+          </button>
+        </div>
       </div>
-      <div className="flex">
+      <div className="flex gap-3">
         <div className="flex-1">
           <label htmlFor="warehouse_id">Warehouse ID</label>
-          <div className="text-sm text-gray-500">{shipmentSelected.warehouse_id}</div>
+          <input
+            className="input-base"
+            id="warehouse_id"
+            readOnly
+            value={shipmentSelected.warehouse_id}
+          />
         </div>
         <div className="flex-1">
           <label htmlFor="arrival_date">Arrival Date</label>
-          <div className="text-sm text-gray-500">
-            {dayjs(shipmentSelected.arrival_date).format('MMM D, YYYY')}
-          </div>
+          <input
+            className="input-base"
+            id="arrival_date"
+            readOnly
+            value={dayjs(shipmentSelected.arrival_date).format('MMM D, YYYY')}
+          />
         </div>
       </div>
       <div className="block">
@@ -171,18 +201,21 @@ const ShipmentDetail = () => {
         <label htmlFor="">Location</label>
         <div className="flex gap-3">
           <div className="flex-1">
-            <input type="text" className="input-base" readOnly value={shipmentSelected.lat} />
+            <input type="text" className="input-base" id="lat" value={shipmentSelected.lat} />
           </div>
           <div className="flex-1">
-            <input type="text" className="input-base" readOnly value={shipmentSelected.lng} />
+            <input type="text" className="input-base" id="lng" value={shipmentSelected.lng} />
           </div>
         </div>
       </div>
-      <div className="block bg-gray-100 p-3">
+      <div className="block bg-gray-100 p-3 rounded-md">
         <div className="block">
-          <p className="field-label">Status</p>
+          <label htmlFor="status" className="field-label">
+            Status
+          </label>
           <select
-            className="input-base"
+            className="select-base"
+            id="status"
             value={shipmentSelected.status}
             onChange={(e) => setStatus(e.target.value as ShipmentStatus)}
           >

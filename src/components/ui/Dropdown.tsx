@@ -82,7 +82,7 @@ const Dropdown = ({
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="input-base flex w-full cursor-pointer items-center justify-between gap-2 text-left"
+        className="select-base flex w-full cursor-pointer items-center justify-between gap-2 text-left"
         onClick={() => !disabled && onOpenChange(!open)}
       >
         <span className={display ? 'font-mono text-sm font-semibold' : 'text-slate-400'}>
