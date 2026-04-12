@@ -15,7 +15,7 @@ const Shipments = () => {
             <div className="flex justify-between items-center px-3 py-2 border-b border-gray-300 bg-gray-200">
               <h1>Shipment</h1>
               <Button size="sm" onClick={() => setShowAddForm((prev) => !prev)}>
-                {showAddForm ? 'Cancel' : 'New'}
+                {showAddForm ? 'Cancel' : '+New'}
               </Button>
             </div>
             {showAddForm && <ShipmentAddForm onClose={() => setShowAddForm(false)} />}

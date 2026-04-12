@@ -10,6 +10,8 @@ import Dropdown from '../ui/Dropdown';
 import ShipmentRouteMap from './ShipmentRouteMap';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import Badge from '../ui/Badge';
+import Select from '../ui/Select';
 
 const STATUSES: ShipmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 const ASSIGN_LIST_SIZE = 100;
@@ -29,8 +31,7 @@ const ShipmentDetail = ({
 }: ShipmentDetailProps = {}) => {
   const queryClient = useQueryClient();
   const { shipmentSelectedId, setShipmentSelectedId } = useShipmentStore();
-  const effectiveId =
-    shipmentIdOverride !== undefined ? shipmentIdOverride : shipmentSelectedId;
+  const effectiveId = shipmentIdOverride !== undefined ? shipmentIdOverride : shipmentSelectedId;
   const [shipmentSelected, setShipmentSelected] = useState<Shipment | null>(null);
   const [assignmentLabel, setAssignmentLabel] = useState('');
   const [assignOpen, setAssignOpen] = useState(false);
@@ -189,66 +190,71 @@ const ShipmentDetail = ({
     <div className="flex flex-col gap-3 p-3">
       <div className="flex justify-between items-center border-b border-gray-200 pb-2">
         <div className="block">
-          <div className="text-lg font-bold">{shipmentSelected.label}</div>
-          <div>{shipmentSelected.client_name}</div>
+          <div className="text-2xl font-bold font-mono">{shipmentSelected.label}</div>
+          <div className="text-sm text-gray-500">{shipmentSelected.client_name}</div>
         </div>
-        <div className="flex gap-3">
-          <button type="button" className="button-base">
+        <div className="flex items-center gap-3">
+          <Badge variant="success" hasAnchor>
             {shipmentSelected.status}
-          </button>
-          <button
-            type="button"
-            className="button-base text-red-500"
-            onClick={() => onDeleteShipment(shipmentSelected.id)}
-          >
+          </Badge>
+          <Button variant="danger" onClick={() => onDeleteShipment(shipmentSelected.id)}>
             Delete
-          </button>
+          </Button>
         </div>
       </div>
       <div className="flex gap-3">
         <div className="flex-1">
-          <label htmlFor="warehouse_id">Warehouse ID</label>
-          <input
-            className="input-base"
+          <Input
+            label="Warehouse ID"
             id="warehouse_id"
             readOnly
             value={shipmentSelected.warehouse_id}
+            onChange={() => {}}
           />
         </div>
         <div className="flex-1">
-          <label htmlFor="arrival_date">Arrival Date</label>
-          <input
-            className="input-base"
+          <Input
+            label="Arrival Date"
             id="arrival_date"
             readOnly
             value={dayjs(shipmentSelected.arrival_date).format('MMM D, YYYY')}
+            onChange={() => {}}
           />
         </div>
       </div>
       <div className="block">
-        <label htmlFor="delivery_by_date">Delivery By Date</label>
-        <input
-          type="date"
-          className="input-base"
+        <Input
+          label="Delivery By Date"
           id="delivery_by_date"
+          type="date"
           value={dayjs(shipmentSelected.delivery_by_date).format('YYYY-MM-DD')}
-          onChange={(e) => {
-            const date = dayjs(e.target.value);
-            if (date.isValid()) {
-              setShipmentSelected((s) => (s ? { ...s, delivery_by_date: date.toISOString() } : s));
-            }
-          }}
+          onChange={(value) =>
+            setShipmentSelected((s) => (s ? { ...s, delivery_by_date: value } : s))
+          }
         />
       </div>
-      <div className="block">
-        <label htmlFor="">Location</label>
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <input type="text" className="input-base" id="lat" value={shipmentSelected.lat} />
-          </div>
-          <div className="flex-1">
-            <input type="text" className="input-base" id="lng" value={shipmentSelected.lng} />
-          </div>
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <Input
+            label="Latitude"
+            id="lat"
+            type="number"
+            value={shipmentSelected.lat.toString()}
+            onChange={(value) =>
+              setShipmentSelected((s) => (s ? { ...s, lat: parseFloat(value) } : s))
+            }
+          />
+        </div>
+        <div className="flex-1">
+          <Input
+            label="Longitude"
+            id="lng"
+            type="number"
+            value={shipmentSelected.lng.toString()}
+            onChange={(value) =>
+              setShipmentSelected((s) => (s ? { ...s, lng: parseFloat(value) } : s))
+            }
+          />
         </div>
       </div>
       <div className="block bg-gray-100 p-3 rounded-md">
@@ -256,18 +262,16 @@ const ShipmentDetail = ({
           <label htmlFor="status" className="field-label">
             Status
           </label>
-          <select
-            className="select-base"
-            id="status"
+          <Select
             value={shipmentSelected.status}
-            onChange={(e) => setStatus(e.target.value as ShipmentStatus)}
+            onChange={(value) => setStatus(value as ShipmentStatus)}
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {s.replace('_', ' ')}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         {showAssignment && (
           <div className="mt-3 block">
@@ -290,14 +294,12 @@ const ShipmentDetail = ({
           </div>
         )}
         <div className="mt-4">
-          <button
-            type="button"
-            className="button-base disabled:opacity-50"
+          <Button
             disabled={saving}
             onClick={() => void save()}
           >
             {saving ? 'Saving…' : 'Save change'}
-          </button>
+          </Button>
         </div>
       </div>
       {assignmentContext ? (
@@ -310,10 +312,7 @@ const ShipmentDetail = ({
           />
         )
       ) : (
-        <ShipmentRouteMap
-          shipments={[shipmentSelected]}
-          selectedShipmentId={shipmentSelected.id}
-        />
+        <ShipmentRouteMap shipments={[shipmentSelected]} selectedShipmentId={shipmentSelected.id} />
       )}
     </div>
   );

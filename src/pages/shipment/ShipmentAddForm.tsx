@@ -44,6 +44,7 @@ const ShipmentAddForm = ({ onClose }: { onClose: () => void }) => {
           <Input
             placeholder="Client name"
             size="sm"
+            autoFocus
             value={form.client_name}
             onChange={(value) => setForm((f) => ({ ...f, client_name: value }))}
           />

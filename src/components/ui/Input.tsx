@@ -8,6 +8,7 @@ interface InputProps {
   readOnly?: boolean;
   label?: string;
   id?: string;
+  autoFocus?: boolean;
   type?: string;
   size?: Size;
 }
@@ -44,6 +45,7 @@ const Input = ({
   id,
   type = 'text',
   size = 'md',
+  autoFocus,
 }: InputProps) => {
   return (
     <div className="flex flex-col gap-1">
@@ -64,6 +66,7 @@ const Input = ({
         readOnly={readOnly}
         id={id}
         type={type}
+        autoFocus={autoFocus}
       />
     </div>
   );
