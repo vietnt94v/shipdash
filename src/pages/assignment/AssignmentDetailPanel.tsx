@@ -250,19 +250,10 @@ const AssignmentDetailPanel = () => {
             undone.
           </p>
           <div className="flex gap-2 justify-end mt-4">
-            <Button
-              variant="secondary"
-              size="sm"
-              outline
-              onClick={() => setDeleteConfirmOpen(false)}
-            >
+            <Button variant="secondary" outline onClick={() => setDeleteConfirmOpen(false)}>
               Cancel
             </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => void onConfirmDelete()}
-            >
+            <Button variant="danger" onClick={() => void onConfirmDelete()}>
               Delete
             </Button>
           </div>

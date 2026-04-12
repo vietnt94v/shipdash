@@ -10,6 +10,7 @@ export interface Shipment {
   eta: string;
   warehouse_id: string;
   assignment_id: string | null;
+  assignment_label: string | null;
   lat: number;
   lng: number;
 }

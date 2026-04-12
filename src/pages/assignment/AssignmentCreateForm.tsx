@@ -45,7 +45,7 @@ const AssignmentCreateForm = ({ onClose }: { onClose: () => void }) => {
           autoFocus
         />
         <Button size="sm" disabled={saving}>
-          {saving ? 'Creating…' : 'Create assignment'}
+          Create assignment
         </Button>
       </div>
     </form>

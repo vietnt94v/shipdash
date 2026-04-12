@@ -24,6 +24,10 @@ const assignmentDefs = [
 const transitPool = ['as_001', 'as_002', 'as_003', 'as_004'];
 const deliveredPool = ['as_005'];
 
+const assignmentLabelById = Object.fromEntries(
+  assignmentDefs.map((a) => [a.id, a.label]),
+);
+
 const shipments = [];
 
 for (let i = 1; i <= 100; i++) {
@@ -47,6 +51,7 @@ for (let i = 1; i <= 100; i++) {
     eta: eta.toISOString(),
     warehouse_id: '581',
     assignment_id,
+    assignment_label: assignment_id ? assignmentLabelById[assignment_id] : null,
     lat: Math.random() * (maxLat - minLat) + minLat,
     lng: Math.random() * (maxLng - minLng) + minLng,
   });

@@ -23,6 +23,7 @@ const ShipmentAddForm = ({ onClose }: { onClose: () => void }) => {
         warehouse_id: form.warehouse_id || '581',
         status: 'OPEN',
         assignment_id: null,
+        assignment_label: null,
         arrival_date: now,
         delivery_by_date: dayjs().add(2, 'day').toISOString(),
         eta: dayjs().add(1, 'day').toISOString(),
