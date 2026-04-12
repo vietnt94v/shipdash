@@ -15,7 +15,6 @@ import Select from '../../ui/Select';
 import ShipmentDetailRoute from './ShipmentDetailRoute';
 
 const STATUSES: ShipmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
-
 const ASSIGN_LIST_SIZE = 100;
 
 export type ShipmentDetailProps = {
@@ -26,7 +25,6 @@ export type ShipmentDetailProps = {
 };
 
 type AssignItem = { id: string; label: string };
-
 type ShipmentDetailInnerProps = ShipmentDetailProps & {
   effectiveId: string;
 };
@@ -361,8 +359,6 @@ const ShipmentDetailInner = ({
           shipment={draft}
         />
       </div>
-
-      {/* ------- Modal for deleting shipment ------- */}
       <Modal open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} hideCloseButton>
         <div>
           <h3 className="font-semibold text-lg">Delete this shipment?</h3>

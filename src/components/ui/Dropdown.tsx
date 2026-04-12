@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Button from './Button';
+import Input from './Input';
 
 export type DropdownItem = { id: string; label: string };
 
@@ -82,15 +83,11 @@ const Dropdown = ({
         <div className="absolute z-50 mt-1 max-h-72 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
           {showSearch && (
             <div className="border-b border-gray-100 p-2">
-              <input
+              <Input
                 type="search"
-                className="input-base"
                 value={searchValue}
                 placeholder="Search…"
-                onChange={(e) => onSearchChange(e.target.value)}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-                autoFocus
+                onChange={(value) => onSearchChange(value)}
               />
             </div>
           )}
