@@ -37,8 +37,8 @@ export const getAssignments = async (
   return response.data;
 };
 
-export const getAssignmentById = async (id: string) => {
-  const response = await api.get(`/assignments/${id}`);
+export const getAssignmentById = async (id: string, signal?: AbortSignal) => {
+  const response = await api.get(`/assignments/${id}`, { signal });
   return response.data;
 };
 

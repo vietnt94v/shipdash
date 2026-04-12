@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ShipmentAddForm from './ShipmentAddForm';
 import ShipmentList from './ShipmentList';
-import ShipmentDetail from '../../components/common/ShipmentDetail';
+import ShipmentDetail from '../../components/common/shipmentDetail/ShipmentDetail';
 import Button from '../../components/ui/Button';
 
 const Shipments = () => {
@@ -13,8 +13,12 @@ const Shipments = () => {
         <div className="sticky top-(--header-height) max-h-[calc(100vh-(var(--header-height)))] w-90 shrink-0 p-3">
           <div className="flex flex-col justify-baseline border border-gray-300 h-full rounded-md overflow-hidden">
             <div className="flex justify-between items-center px-3 py-2 border-b border-gray-300 bg-gray-200">
-              <h1>Shipment</h1>
-              <Button size="sm" onClick={() => setShowAddForm((prev) => !prev)}>
+              <h2 className="uppercase font-mono">Shipments</h2>
+              <Button
+                size="sm"
+                variant={showAddForm ? 'secondary' : 'primary'}
+                onClick={() => setShowAddForm((prev) => !prev)}
+              >
                 {showAddForm ? 'Cancel' : '+New'}
               </Button>
             </div>

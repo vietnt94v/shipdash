@@ -1,38 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
-import {
-  deleteAssignment,
-  getAssignmentById,
-  updateAssignment,
-} from '../../api/assignment';
+import { deleteAssignment, getAssignmentById, updateAssignment } from '../../api/assignment';
 import { getShipmentsByAssignmentId } from '../../api/shipment';
 import { useAssignmentStore, useShipmentStore } from '../../store';
 import type { Assignment, AssignmentStatus } from '../../types/assignment';
-import type { ShipmentStatus } from '../../types/shipment';
+import Button from '../../components/ui/Button';
+import Modal from '../../components/ui/Modal';
+import Select from '../../components/ui/Select';
+import CardItem from '../../components/common/CardItem';
+import Badge from '../../components/ui/Badge';
 
 const PAGE_SIZE = 15;
-const ASSIGNMENT_STATUSES: AssignmentStatus[] = [
-  'OPEN',
-  'IN_TRANSIT',
-  'DELIVERED',
-];
-
-const shipmentStatusBadge = (s: ShipmentStatus) => {
-  if (s === 'OPEN') {
-    return 'bg-blue-100 text-blue-800';
-  }
-  if (s === 'IN_TRANSIT') {
-    return 'bg-amber-100 text-amber-900';
-  }
-  return 'bg-emerald-100 text-emerald-900';
-};
+const ASSIGNMENT_STATUSES: AssignmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 
 const AssignmentDetailPanel = () => {
   const queryClient = useQueryClient();
   const { assignmentSelectedId, setAssignmentSelectedId } = useAssignmentStore();
   const { setShipmentSelectedId, shipmentSelectedId } = useShipmentStore();
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
   const shipmentsScrollRef = useRef<HTMLDivElement>(null);
   const shipmentsSentinelRef = useRef<HTMLDivElement>(null);
@@ -46,12 +32,7 @@ const AssignmentDetailPanel = () => {
   const shipmentsInfinite = useInfiniteQuery({
     queryKey: ['shipments', 'byAssignment', assignmentSelectedId],
     queryFn: ({ pageParam, signal }) =>
-      getShipmentsByAssignmentId(
-        assignmentSelectedId!,
-        pageParam as number,
-        PAGE_SIZE,
-        signal,
-      ),
+      getShipmentsByAssignmentId(assignmentSelectedId!, pageParam as number, PAGE_SIZE, signal),
     initialPageParam: 1,
     getNextPageParam: (last) => last.next ?? undefined,
     enabled: !!assignmentSelectedId,
@@ -61,6 +42,11 @@ const AssignmentDetailPanel = () => {
     () => shipmentsInfinite.data?.pages.flatMap((p) => p.data) ?? [],
     [shipmentsInfinite.data],
   );
+
+  const shipmentTotalFromApi = shipmentsInfinite.data?.pages[0]?.items;
+  const shipmentCountReady = shipmentsInfinite.data !== undefined;
+  const hasAnyShipments = shipmentCountReady && (shipmentTotalFromApi ?? 0) > 0;
+  const canDeleteAssignment = shipmentCountReady && !hasAnyShipments;
 
   const counts = useMemo(() => {
     let open = 0;
@@ -119,18 +105,18 @@ const AssignmentDetailPanel = () => {
     }
   };
 
-  const onDelete = async () => {
+  const onDeleteClick = () => {
+    if (!assignment || deleting || !canDeleteAssignment) {
+      return;
+    }
+    setDeleteConfirmOpen(true);
+  };
+
+  const onConfirmDelete = async () => {
     if (!assignment || deleting) {
       return;
     }
-    const check = await getShipmentsByAssignmentId(assignment.id, 1, 1);
-    if (check.items > 0) {
-      window.alert('Only empty assignments can be deleted.');
-      return;
-    }
-    if (!window.confirm('Delete this assignment?')) {
-      return;
-    }
+    setDeleteConfirmOpen(false);
     setDeleting(true);
     try {
       await deleteAssignment(assignment.id);
@@ -143,9 +129,7 @@ const AssignmentDetailPanel = () => {
   };
 
   if (!assignmentSelectedId) {
-    return (
-      <div className="text-gray-500 text-sm p-2">Select an assignment.</div>
-    );
+    return <div className="text-gray-500 text-sm p-2">Select an assignment.</div>;
   }
 
   if (assignmentQuery.isPending) {
@@ -157,48 +141,50 @@ const AssignmentDetailPanel = () => {
   }
 
   return (
-    <div className="flex flex-col gap-3 min-h-0 flex-1">
-      <div className="flex justify-between items-start gap-2 border-b border-gray-200 pb-2 shrink-0">
+    <div className="flex flex-col min-h-0 flex-1 border border-gray-300 rounded-md overflow-hidden">
+      <div className="flex justify-between items-start gap-2 border-b border-gray-300 pb-2 shrink-0 p-3">
         <div>
-          <div className="text-lg font-bold">{assignment.label}</div>
+          <h2 className="uppercase font-mono font-bold text-2xl">{assignment.label}</h2>
           <div className="text-sm text-gray-600 mt-1">
-            {assignment.clients.length > 0
-              ? assignment.clients.join(' · ')
-              : '—'}
+            {assignment.clients.length > 0 ? assignment.clients.join(' · ') : '—'}
           </div>
         </div>
-        <button
-          type="button"
-          className="button-base text-red-600 shrink-0"
-          disabled={deleting}
-          onClick={() => void onDelete()}
-        >
-          {deleting ? '…' : 'Delete'}
-        </button>
+        <div className="flex flex-col items-end gap-1 shrink-0 max-w-48">
+          <span
+            className="inline-block"
+            title={
+              hasAnyShipments
+                ? 'Remove all shipments from this assignment before deleting it.'
+                : undefined
+            }
+          >
+            <Button
+              variant="danger"
+              size="sm"
+              outline
+              disabled={deleting || !canDeleteAssignment}
+              onClick={onDeleteClick}
+            >
+              Delete
+            </Button>
+          </span>
+        </div>
       </div>
-
-      <div className="shrink-0">
-        <label htmlFor="assignment-status" className="field-label">
-          Status
-        </label>
-        <select
-          id="assignment-status"
-          className="select-base mt-1"
+      <div className="shrink-0 p-3 border-b border-gray-300">
+        <Select
+          label="Status"
           value={assignment.status}
           disabled={savingStatus}
-          onChange={(e) =>
-            void onStatusChange(e.target.value as AssignmentStatus)
-          }
+          onChange={(value) => void onStatusChange(value as AssignmentStatus)}
         >
           {ASSIGNMENT_STATUSES.map((s) => (
             <option key={s} value={s}>
               {s.replace('_', ' ')}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
-
-      <div className="flex gap-2 text-sm shrink-0 flex-wrap">
+      <div className="flex gap-2 text-sm shrink-0 flex-wrap p-3 border-b border-gray-300">
         <span className="text-gray-600">
           <strong>{counts.open}</strong> OPEN
         </span>
@@ -213,64 +199,75 @@ const AssignmentDetailPanel = () => {
       </div>
 
       <div className="flex flex-col min-h-0 flex-1">
-        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide pb-2 shrink-0">
+        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide shrink-0 p-1 border-b border-gray-300 bg-gray-200">
           Shipments · {shipments.length}
           {shipmentsInfinite.hasNextPage ? '+' : ''}
         </div>
-        <div
-          ref={shipmentsScrollRef}
-          className="flex flex-col flex-1 min-h-0 overflow-y-auto border border-gray-200 rounded-md"
-        >
+        <div ref={shipmentsScrollRef} className="flex flex-col flex-1 min-h-0 overflow-y-auto">
           {shipmentsInfinite.isPending && !shipmentsInfinite.data ? (
             <div className="text-gray-500 text-sm p-2">Loading…</div>
           ) : shipments.length === 0 ? (
             <div className="text-gray-500 text-sm p-2">No shipments yet.</div>
           ) : (
             shipments.map((s) => (
-              <div
+              <CardItem
                 key={s.id}
-                role="button"
-                tabIndex={0}
                 onClick={() => setShipmentSelectedId(s.id)}
-                onKeyDown={(ev) => {
-                  if (ev.key === 'Enter' || ev.key === ' ') {
-                    ev.preventDefault();
-                    setShipmentSelectedId(s.id);
-                  }
-                }}
-                className={`cursor-pointer border-b border-gray-200 last:border-b-0 p-2 shrink-0 ${
-                  shipmentSelectedId === s.id ? 'bg-gray-300' : 'hover:bg-gray-100'
-                }`}
+                isSelected={shipmentSelectedId === s.id}
               >
-                <div className="flex justify-between items-start gap-2">
-                  <span className="font-mono text-sm">{s.label}</span>
-                  <span
-                    className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${shipmentStatusBadge(
-                      s.status,
-                    )}`}
+                <div className="font-mono">{s.label}</div>
+                <div className="flex justify-between gap-2">
+                  <div className="text-sm text-gray-600">{s.client_name}</div>
+                  <Badge
+                    size="sm"
+                    variant={
+                      s.status === 'OPEN'
+                        ? 'primary'
+                        : s.status === 'IN_TRANSIT'
+                          ? 'warning'
+                          : 'success'
+                    }
+                    hasAnchor
                   >
-                    {s.status}
-                  </span>
+                    {s.status.replace('_', ' ')}
+                  </Badge>
                 </div>
-                <div className="text-sm text-gray-600 mt-1">{s.client_name}</div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {dayjs(s.arrival_date).format('MMM D, YYYY')}
-                </div>
-              </div>
+              </CardItem>
             ))
           )}
-          <div
-            ref={shipmentsSentinelRef}
-            className="h-px w-full shrink-0"
-            aria-hidden
-          />
+          <div ref={shipmentsSentinelRef} className="h-px w-full shrink-0" aria-hidden />
           {shipmentsInfinite.isFetchingNextPage ? (
-            <div className="text-gray-500 text-sm p-2 text-center shrink-0">
-              Loading more…
-            </div>
+            <div className="text-gray-500 text-sm p-2 text-center shrink-0">Loading more…</div>
           ) : null}
         </div>
       </div>
+
+      <Modal open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} hideCloseButton>
+        <div>
+          <h3 className="font-semibold text-lg">Delete this assignment?</h3>
+          <p className="text-sm text-gray-600 mt-2">
+            This will remove <span className="font-mono">{assignment.label}</span>. This cannot be
+            undone.
+          </p>
+          <div className="flex gap-2 justify-end mt-4">
+            <Button
+              variant="secondary"
+              size="sm"
+              outline
+              onClick={() => setDeleteConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => void onConfirmDelete()}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

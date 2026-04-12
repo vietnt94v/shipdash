@@ -7,7 +7,7 @@ import {
   TileLayer,
   useMap,
 } from 'react-leaflet';
-import type { Shipment } from '../../types/shipment';
+import type { Shipment } from '../../../types/shipment';
 
 const defaultIcon = L.icon({
   iconRetinaUrl:
@@ -35,15 +35,20 @@ const MapFocus = ({ lat, lng }: { lat: number; lng: number }) => {
   return null;
 };
 
-export type ShipmentRouteMapProps = {
-  shipments: Shipment[];
-  selectedShipmentId: string;
+type ShipmentDetailRouteProps = {
+  assignmentContext?: boolean;
+  routeShipmentsPending?: boolean;
+  routeShipments?: Shipment[];
+  shipment: Shipment;
 };
 
-const ShipmentRouteMap = ({
+const RouteMapInner = ({
   shipments,
   selectedShipmentId,
-}: ShipmentRouteMapProps) => {
+}: {
+  shipments: Shipment[];
+  selectedShipmentId: string;
+}) => {
   const sorted = useMemo(
     () =>
       [...shipments].sort((a, b) =>
@@ -106,4 +111,26 @@ const ShipmentRouteMap = ({
   );
 };
 
-export default ShipmentRouteMap;
+const ShipmentDetailRoute = ({
+  assignmentContext,
+  routeShipmentsPending,
+  routeShipments,
+  shipment,
+}: ShipmentDetailRouteProps) => {
+  if (assignmentContext) {
+    if (routeShipmentsPending) {
+      return <div className="text-sm text-gray-500 p-2">Loading route…</div>;
+    }
+    return (
+      <RouteMapInner
+        shipments={routeShipments ?? []}
+        selectedShipmentId={shipment.id}
+      />
+    );
+  }
+  return (
+    <RouteMapInner shipments={[shipment]} selectedShipmentId={shipment.id} />
+  );
+};
+
+export default ShipmentDetailRoute;

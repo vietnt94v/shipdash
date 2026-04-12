@@ -87,37 +87,29 @@ const ShipmentList = () => {
 
   const showInitialLoading = activeQuery.isPending && !activeQuery.data;
 
-  const ShipmentHeader = () => {
-    return (
-      <>
-        <div className="shrink-0 border-b border-gray-300 p-3">
-          <Input
-            type="text"
-            size="sm"
-            placeholder="Search by label or client..."
-            value={searchInput}
-            onChange={(value) => setSearchInput(value)}
-          />
-        </div>
-        <div className="flex justify-between border-b border-gray-300 bg-gray-200 p-2">
-          {STATUS_ORDER.map((status) => (
-            <Button
-              key={status}
-              onClick={() => setActiveTab(status)}
-              variant={status === activeTab ? 'info' : 'secondary'}
-              size="sm"
-            >
-              {status.replace('_', ' ')}
-            </Button>
-          ))}
-        </div>
-      </>
-    );
-  };
-
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <ShipmentHeader />
+      <div className="shrink-0 border-b border-gray-300 p-3">
+        <Input
+          type="text"
+          size="sm"
+          placeholder="Search by label or client..."
+          value={searchInput}
+          onChange={(value) => setSearchInput(value)}
+        />
+      </div>
+      <div className="flex justify-between border-b border-gray-300 bg-gray-200 p-2">
+        {STATUS_ORDER.map((status) => (
+          <Button
+            key={status}
+            onClick={() => setActiveTab(status)}
+            variant={status === activeTab ? 'info' : 'secondary'}
+            size="sm"
+          >
+            {status.replace('_', ' ')}
+          </Button>
+        ))}
+      </div>
       <div ref={scrollRef} className="flex flex-col flex-1 min-h-0 overflow-y-auto">
         {showInitialLoading ? (
           <div className="text-gray-500 text-sm p-2">Loading…</div>

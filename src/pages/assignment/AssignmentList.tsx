@@ -2,6 +2,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AssignmentStatus } from '../../types/assignment';
 import { useAssignmentStore, useShipmentStore } from '../../store';
 import { useAssignmentInfiniteForStatus } from '../../hooks/useAssignmentInfiniteForStatus';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import CardItem from '../../components/common/CardItem';
 
 const STATUS_ORDER: AssignmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 const PAGE_SIZE = 10;
@@ -28,18 +31,8 @@ const AssignmentList = () => {
   const queryKeyPart = mode === 'search' ? trimmedDebounced : '';
 
   const openQ = useAssignmentInfiniteForStatus('OPEN', mode, queryKeyPart, PAGE_SIZE);
-  const transitQ = useAssignmentInfiniteForStatus(
-    'IN_TRANSIT',
-    mode,
-    queryKeyPart,
-    PAGE_SIZE,
-  );
-  const deliveredQ = useAssignmentInfiniteForStatus(
-    'DELIVERED',
-    mode,
-    queryKeyPart,
-    PAGE_SIZE,
-  );
+  const transitQ = useAssignmentInfiniteForStatus('IN_TRANSIT', mode, queryKeyPart, PAGE_SIZE);
+  const deliveredQ = useAssignmentInfiniteForStatus('DELIVERED', mode, queryKeyPart, PAGE_SIZE);
 
   const activeQuery = useMemo(() => {
     if (activeTab === 'OPEN') {
@@ -98,70 +91,50 @@ const AssignmentList = () => {
   const showInitialLoading = activeQuery.isPending && !activeQuery.data;
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-3">
-      <div className="shrink-0">
-        <input
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="shrink-0 border-b border-gray-300 p-3">
+        <Input
           type="text"
-          placeholder="Search"
-          className="input-base w-full"
+          size="sm"
+          placeholder="Search by label or client..."
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={(value) => setSearchInput(value)}
         />
       </div>
-      <div className="flex justify-between items-center shrink-0 gap-1">
-        {STATUS_ORDER.map((s) => (
-          <button
-            type="button"
-            key={s}
-            onClick={() => setActiveTab(s)}
-            className={`cursor-pointer p-2 rounded-md transition-colors hover:bg-gray-100 flex-1 text-center ${
-              s === activeTab ? 'bg-gray-300' : ''
-            }`}
+      <div className="flex justify-between border-b border-gray-300 bg-gray-200 p-2">
+        {STATUS_ORDER.map((status) => (
+          <Button
+            key={status}
+            onClick={() => setActiveTab(status)}
+            variant={status === activeTab ? 'info' : 'secondary'}
+            size="sm"
           >
-            {s.replace('_', ' ')}
-          </button>
+            {status.replace('_', ' ')}
+          </Button>
         ))}
       </div>
-      <div
-        ref={scrollRef}
-        className="flex flex-col flex-1 min-h-0 overflow-y-auto"
-      >
+      <div ref={scrollRef} className="flex flex-col flex-1 min-h-0 overflow-y-auto">
         {showInitialLoading ? (
           <div className="text-gray-500 text-sm p-2">Loading…</div>
         ) : rows.length === 0 ? (
           <div className="text-gray-500 text-sm p-2">No assignments.</div>
         ) : (
           rows.map((a) => (
-            <div
+            <CardItem
               key={a.id}
-              role="button"
-              tabIndex={0}
               onClick={() => handleSelectAssignment(a.id)}
-              onKeyDown={(ev) => {
-                if (ev.key === 'Enter' || ev.key === ' ') {
-                  ev.preventDefault();
-                  handleSelectAssignment(a.id);
-                }
-              }}
-              className={`cursor-pointer border-b border-gray-200 hover:bg-gray-100 p-2 shrink-0 ${
-                assignmentSelectedId === a.id ? 'bg-gray-300' : ''
-              }`}
+              isSelected={assignmentSelectedId === a.id}
             >
-              <div className="font-medium">{a.label}</div>
-              <div>
+              <div className="font-mono">{a.label}</div>
+              <div className="text-sm text-gray-600">
                 {a.shipment_count} shipment{a.shipment_count === 1 ? '' : 's'}
               </div>
-              <div className="text-gray-600">
-                {a.clients.length > 0 ? a.clients.join(' · ') : '—'}
-              </div>
-            </div>
+            </CardItem>
           ))
         )}
         <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
         {activeQuery.isFetchingNextPage ? (
-          <div className="text-gray-500 text-sm p-2 text-center shrink-0">
-            Loading more…
-          </div>
+          <div className="text-gray-500 text-sm p-2 text-center shrink-0">Loading more…</div>
         ) : null}
       </div>
     </div>

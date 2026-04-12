@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createAssignment } from '../../api/assignment';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
 
 const AssignmentCreateForm = ({ onClose }: { onClose: () => void }) => {
   const queryClient = useQueryClient();
@@ -34,17 +36,17 @@ const AssignmentCreateForm = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)}>
-      <div className="flex flex-col gap-2 p-3">
-        <input
-          className="input-base w-full"
+      <div className="flex flex-col border-b border-gray-300 gap-2 p-3">
+        <Input
           placeholder="Label e.g. TX-999"
+          size="sm"
           value={label}
-          onChange={(e) => setLabel(e.target.value)}
+          onChange={(value) => setLabel(value)}
           autoFocus
         />
-        <button type="submit" className="button-base" disabled={saving}>
+        <Button size="sm" disabled={saving}>
           {saving ? 'Creating…' : 'Create assignment'}
-        </button>
+        </Button>
       </div>
     </form>
   );

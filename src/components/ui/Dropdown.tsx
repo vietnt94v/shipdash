@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
+import Button from './Button';
 
 export type DropdownItem = { id: string; label: string };
 
 export type DropdownProps = {
-  id?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   placeholder: string;
@@ -21,7 +21,6 @@ export type DropdownProps = {
 };
 
 const Dropdown = ({
-  id,
   open,
   onOpenChange,
   placeholder,
@@ -76,27 +75,11 @@ const Dropdown = ({
 
   return (
     <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        id={id}
-        disabled={disabled}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        className="select-base flex w-full cursor-pointer items-center justify-between gap-2 text-left"
-        onClick={() => !disabled && onOpenChange(!open)}
-      >
-        <span className={display ? 'font-mono text-sm font-semibold' : 'text-slate-400'}>
-          {display ?? placeholder}
-        </span>
-        <span className="text-slate-400" aria-hidden>
-          ▾
-        </span>
-      </button>
+      <Button disabled={disabled} onClick={() => !disabled && onOpenChange(!open)} outline>
+        {display ?? placeholder}
+      </Button>
       {open && (
-        <div
-          className="absolute z-50 mt-1 max-h-72 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg"
-          role="listbox"
-        >
+        <div className="absolute z-50 mt-1 max-h-72 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
           {showSearch && (
             <div className="border-b border-gray-100 p-2">
               <input

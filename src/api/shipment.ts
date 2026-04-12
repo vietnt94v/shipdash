@@ -44,8 +44,8 @@ export const searchShipments = async (
   return response.data;
 };
 
-export const getShipmentById = async (id: string) => {
-  const response = await api.get(`/shipments/${id}`);
+export const getShipmentById = async (id: string, signal?: AbortSignal) => {
+  const response = await api.get(`/shipments/${id}`, { signal });
   return response.data;
 };
 
