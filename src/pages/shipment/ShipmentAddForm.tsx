@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { createShipment } from '../../api/shipment';
 import dayjs from 'dayjs';
+import { createShipment } from '../../api/shipment';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
 
 const ShipmentAddForm = ({ onClose }: { onClose: () => void }) => {
   const [form, setForm] = useState({
@@ -37,30 +39,27 @@ const ShipmentAddForm = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <>
-      <form onSubmit={handleAddNewShipment}>
+      <form onSubmit={handleAddNewShipment} className="border-b border-gray-300">
         <div className="flex flex-col gap-2 p-3">
-          <input
+          <Input
             placeholder="Client name"
+            size="sm"
             value={form.client_name}
-            onChange={(e) => setForm((f) => ({ ...f, client_name: e.target.value }))}
-            className="input-base"
-            autoFocus
+            onChange={(value) => setForm((f) => ({ ...f, client_name: value }))}
           />
-          <input
+          <Input
             placeholder="Label e.g. LAX-581-001"
+            size="sm"
             value={form.label}
-            onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-            className="input-base"
+            onChange={(value) => setForm((f) => ({ ...f, label: value }))}
           />
-          <input
+          <Input
             placeholder="Warehouse ID"
+            size="sm"
             value={form.warehouse_id}
-            onChange={(e) => setForm((f) => ({ ...f, warehouse_id: e.target.value }))}
-            className="input-base"
+            onChange={(value) => setForm((f) => ({ ...f, warehouse_id: value }))}
           />
-          <button type="submit" className="button-base">
-            Create shipment
-          </button>
+          <Button size="sm">Create shipment</Button>
         </div>
       </form>
     </>

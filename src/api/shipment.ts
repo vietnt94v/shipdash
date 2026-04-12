@@ -63,3 +63,44 @@ export const deleteShipment = async (id: string) => {
   const response = await api.delete(`/shipments/${id}`);
   return response.data;
 };
+
+const MAP_FETCH_PER_PAGE = 500;
+
+export const getShipmentsByAssignmentId = async (
+  assignmentId: string,
+  page: number,
+  pageSize: number,
+  signal?: AbortSignal,
+): Promise<ShipmentsPageResponse> => {
+  const response = await api.get<ShipmentsPageResponse>('/shipments', {
+    params: {
+      _where: JSON.stringify({ assignment_id: { eq: assignmentId } }),
+      _page: page,
+      _per_page: pageSize,
+    },
+    signal,
+  });
+  return response.data;
+};
+
+export const getAllShipmentsByAssignmentId = async (
+  assignmentId: string,
+  signal?: AbortSignal,
+): Promise<Shipment[]> => {
+  const acc: Shipment[] = [];
+  let page = 1;
+  for (;;) {
+    const res = await getShipmentsByAssignmentId(
+      assignmentId,
+      page,
+      MAP_FETCH_PER_PAGE,
+      signal,
+    );
+    acc.push(...res.data);
+    if (!res.next) {
+      break;
+    }
+    page = res.next;
+  }
+  return acc;
+};

@@ -1,20 +1,34 @@
 import api from './index';
-import type { Assignment, AssignmentsPageResponse } from '../types/assignment';
+import type {
+  Assignment,
+  AssignmentStatus,
+  AssignmentsPageResponse,
+} from '../types/assignment';
 
 export const getAssignments = async (
   page: number,
   perPage: number,
-  options?: { search?: string; signal?: AbortSignal },
+  options?: {
+    search?: string;
+    status?: AssignmentStatus;
+    signal?: AbortSignal;
+  },
 ): Promise<AssignmentsPageResponse> => {
   const trimmed = options?.search?.trim() ?? '';
+  const status = options?.status;
   const params: Record<string, string | number> = {
     _page: page,
     _per_page: perPage,
   };
+  const where: Record<string, unknown> = {};
+  if (status) {
+    where.status = { eq: status };
+  }
   if (trimmed !== '') {
-    params._where = JSON.stringify({
-      label: { contains: trimmed },
-    });
+    where.label = { contains: trimmed };
+  }
+  if (Object.keys(where).length > 0) {
+    params._where = JSON.stringify(where);
   }
   const response = await api.get<AssignmentsPageResponse>('/assignments', {
     params,

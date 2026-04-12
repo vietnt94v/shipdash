@@ -30,12 +30,12 @@
       "id": "shp_003",
       "client_name": "CargoTrans",
       "label": "SFO-581-250523-3",
-      "status": "OPEN",
+      "status": "IN_TRANSIT",
       "arrival_date": "2026-04-01T07:35:28.040Z",
       "delivery_by_date": "2026-04-03T07:35:28.040Z",
       "eta": "2026-04-02T02:35:28.040Z",
       "warehouse_id": "581",
-      "assignment_id": null,
+      "assignment_id": "as_001",
       "lat": 32.70608923559514,
       "lng": -97.34837336186467
     },
@@ -1344,7 +1344,7 @@
     {
       "id": "as_001",
       "label": "TX-001",
-      "status": "OPEN",
+      "status": "DELIVERED",
       "clients": [
         "ShipCo",
         "DHL",
@@ -1389,7 +1389,7 @@
     {
       "id": "as_004",
       "label": "LAX-A2",
-      "status": "IN_TRANSIT",
+      "status": "OPEN",
       "clients": [
         "Sony",
         "Logix",
@@ -1404,7 +1404,7 @@
     {
       "id": "as_005",
       "label": "EWR-B1",
-      "status": "DELIVERED",
+      "status": "IN_TRANSIT",
       "clients": [
         "DHL",
         "Logix",

@@ -3,6 +3,9 @@ import dayjs from 'dayjs';
 import type { ShipmentStatus } from '../../types/shipment';
 import { useShipmentStore } from '../../store';
 import { useShipmentInfiniteForStatus } from '../../hooks/useShipmentInfiniteForStatus';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import CardItem from '../../components/common/CardItem';
 
 const STATUS_ORDER: ShipmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 const PAGE_SIZE = 10;
@@ -84,35 +87,29 @@ const ShipmentList = () => {
     setShipmentSelectedId(shipmentId);
   };
 
-  const handleChangeSearchShipment = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value);
-  };
-
   const showInitialLoading = activeQuery.isPending && !activeQuery.data;
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-3">
-      <div className="shrink-0">
-        <input
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="shrink-0 border-b border-gray-300 p-3">
+        <Input
           type="text"
-          placeholder="Search"
-          className="input-base w-full"
+          size="sm"
+          placeholder="Search by label or client..."
           value={searchInput}
-          onChange={handleChangeSearchShipment}
+          onChange={(value) => setSearchInput(value)}
         />
       </div>
-      <div className="flex justify-between items-center shrink-0 gap-1">
-        {STATUS_ORDER.map((s) => (
-          <button
-            type="button"
-            key={s}
-            onClick={() => setActiveTab(s)}
-            className={`cursor-pointer p-2 rounded-md transition-colors hover:bg-gray-100 flex-1 text-center ${
-              s === activeTab ? 'bg-gray-300' : ''
-            }`}
+      <div className="flex justify-between border-b border-gray-300 bg-gray-200 p-3">
+        {STATUS_ORDER.map((status) => (
+          <Button
+            key={status}
+            onClick={() => setActiveTab(status)}
+            variant={status === activeTab ? 'primary' : 'secondary'}
+            size="sm"
           >
-            {s.replace('_', ' ')}
-          </button>
+            {status.replace('_', ' ')}
+          </Button>
         ))}
       </div>
       <div ref={scrollRef} className="flex flex-col flex-1 min-h-0 overflow-y-auto">
@@ -122,17 +119,19 @@ const ShipmentList = () => {
           <div className="text-gray-500 text-sm p-2">No shipments.</div>
         ) : (
           shipments.map((shipment) => (
-            <div
+            <CardItem
               key={shipment.id}
               onClick={() => handleSelectShipment(shipment.id)}
-              className={`cursor-pointer border-b border-gray-200 hover:bg-gray-100 p-2 shrink-0 ${
-                shipmentSelectedId === shipment.id ? 'bg-gray-300' : ''
-              }`}
+              isSelected={shipmentSelectedId === shipment.id}
             >
-              <div>{shipment.client_name}</div>
-              <div>{shipment.label}</div>
-              <div>{dayjs(shipment.arrival_date).format('MMM D, YYYY')}</div>
-            </div>
+              <div className="font-mono">{shipment.label}</div>
+              <div className="flex justify-between gap-2">
+                <div className="text-sm text-gray-600">{shipment.client_name}</div>
+                <div className="text-xs text-gray-500">
+                  {dayjs(shipment.arrival_date).format('MMM D, YYYY')}
+                </div>
+              </div>
+            </CardItem>
           ))
         )}
         <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />

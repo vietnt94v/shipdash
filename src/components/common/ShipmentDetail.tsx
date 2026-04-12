@@ -7,13 +7,30 @@ import type { Shipment, ShipmentStatus } from '../../types/shipment';
 import { getAssignments as fetchAssignments, getAssignmentById } from '../../api/assignment';
 import type { Assignment } from '../../types/assignment';
 import Dropdown from '../ui/Dropdown';
+import ShipmentRouteMap from './ShipmentRouteMap';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
 
 const STATUSES: ShipmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 const ASSIGN_LIST_SIZE = 100;
 
-const ShipmentDetail = () => {
+export type ShipmentDetailProps = {
+  shipmentIdOverride?: string;
+  routeShipments?: Shipment[];
+  routeShipmentsPending?: boolean;
+  assignmentContext?: boolean;
+};
+
+const ShipmentDetail = ({
+  shipmentIdOverride,
+  routeShipments,
+  routeShipmentsPending,
+  assignmentContext,
+}: ShipmentDetailProps = {}) => {
   const queryClient = useQueryClient();
   const { shipmentSelectedId, setShipmentSelectedId } = useShipmentStore();
+  const effectiveId =
+    shipmentIdOverride !== undefined ? shipmentIdOverride : shipmentSelectedId;
   const [shipmentSelected, setShipmentSelected] = useState<Shipment | null>(null);
   const [assignmentLabel, setAssignmentLabel] = useState('');
   const [assignOpen, setAssignOpen] = useState(false);
@@ -28,11 +45,11 @@ const ShipmentDetail = () => {
     (shipmentSelected.status === 'IN_TRANSIT' || shipmentSelected.status === 'DELIVERED');
 
   useEffect(() => {
-    if (!shipmentSelectedId) {
+    if (!effectiveId) {
       setShipmentSelected(null);
       return;
     }
-    getShipmentById(shipmentSelectedId).then((data) => {
+    getShipmentById(effectiveId).then((data) => {
       setShipmentSelected(data);
       if (data.assignment_id && data.status !== 'OPEN') {
         getAssignmentById(data.assignment_id)
@@ -42,7 +59,7 @@ const ShipmentDetail = () => {
         setAssignmentLabel('');
       }
     });
-  }, [shipmentSelectedId]);
+  }, [effectiveId]);
 
   useEffect(() => {
     const t = setTimeout(() => setAssignQDebounced(assignQ), 300);
@@ -121,6 +138,19 @@ const ShipmentDetail = () => {
     try {
       await updateShipment(shipmentSelected.id, shipmentSelected);
       await queryClient.invalidateQueries({ queryKey: ['shipments'] });
+      if (assignmentContext) {
+        await queryClient.invalidateQueries({ queryKey: ['assignments'] });
+        await queryClient.invalidateQueries({ queryKey: ['assignment'] });
+        await queryClient.invalidateQueries({
+          queryKey: ['shipments', 'byAssignment'],
+        });
+        const aid = shipmentSelected.assignment_id;
+        if (aid) {
+          await queryClient.invalidateQueries({
+            queryKey: ['assignmentRoute', aid],
+          });
+        }
+      }
       setShipmentSelectedId('');
     } finally {
       setSaving(false);
@@ -134,11 +164,24 @@ const ShipmentDetail = () => {
     if (confirm('Are you sure you want to delete this shipment?')) {
       await deleteShipment(id);
       await queryClient.invalidateQueries({ queryKey: ['shipments'] });
+      if (assignmentContext) {
+        await queryClient.invalidateQueries({ queryKey: ['assignments'] });
+        await queryClient.invalidateQueries({ queryKey: ['assignment'] });
+        await queryClient.invalidateQueries({
+          queryKey: ['shipments', 'byAssignment'],
+        });
+        const aid = shipmentSelected?.assignment_id;
+        if (aid) {
+          await queryClient.invalidateQueries({
+            queryKey: ['assignmentRoute', aid],
+          });
+        }
+      }
       setShipmentSelectedId('');
     }
   };
 
-  if (!shipmentSelectedId || !shipmentSelected) {
+  if (!effectiveId || !shipmentSelected) {
     return null;
   }
 
@@ -257,6 +300,21 @@ const ShipmentDetail = () => {
           </button>
         </div>
       </div>
+      {assignmentContext ? (
+        routeShipmentsPending ? (
+          <div className="text-sm text-gray-500 p-2">Loading route…</div>
+        ) : (
+          <ShipmentRouteMap
+            shipments={routeShipments ?? []}
+            selectedShipmentId={shipmentSelected.id}
+          />
+        )
+      ) : (
+        <ShipmentRouteMap
+          shipments={[shipmentSelected]}
+          selectedShipmentId={shipmentSelected.id}
+        />
+      )}
     </div>
   );
 };
