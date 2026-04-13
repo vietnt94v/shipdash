@@ -10,10 +10,21 @@ const ShipmentAddForm = ({ onClose }: { onClose: () => void }) => {
     label: '',
     warehouse_id: '581',
   });
+  const [validationError, setValidationError] = useState('');
 
-  const handleAddNewShipment = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleAddNewShipment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!form.client_name.trim() || !form.label.trim()) return;
+    if (
+      !form.client_name.trim() ||
+      !form.label.trim() ||
+      !form.warehouse_id.trim()
+    ) {
+      setValidationError(
+        'Please fill in Client name, Label, and Warehouse ID.',
+      );
+      return;
+    }
+    setValidationError('');
 
     try {
       const now = dayjs().toISOString();
@@ -32,6 +43,7 @@ const ShipmentAddForm = ({ onClose }: { onClose: () => void }) => {
         id: `shp_${Math.random().toString(36).substring(2, 15)}`,
       });
       setForm({ client_name: '', label: '', warehouse_id: '581' });
+      setValidationError('');
       onClose();
     } catch (error) {
       console.error(error);
@@ -40,28 +52,40 @@ const ShipmentAddForm = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <>
-      <form onSubmit={handleAddNewShipment} className="border-b border-gray-300">
+      <form onSubmit={handleAddNewShipment} className="border-b border-gray-300 bg-gray-200">
         <div className="flex flex-col gap-2 p-3">
           <Input
             placeholder="Client name"
             size="sm"
             autoFocus
             value={form.client_name}
-            onChange={(value) => setForm((f) => ({ ...f, client_name: value }))}
+            onChange={(value) => {
+              setForm((f) => ({ ...f, client_name: value }));
+              setValidationError('');
+            }}
           />
           <Input
             placeholder="Label e.g. LAX-581-001"
             size="sm"
             value={form.label}
-            onChange={(value) => setForm((f) => ({ ...f, label: value }))}
+            onChange={(value) => {
+              setForm((f) => ({ ...f, label: value }));
+              setValidationError('');
+            }}
           />
           <Input
             placeholder="Warehouse ID"
             size="sm"
             value={form.warehouse_id}
-            onChange={(value) => setForm((f) => ({ ...f, warehouse_id: value }))}
+            onChange={(value) => {
+              setForm((f) => ({ ...f, warehouse_id: value }));
+              setValidationError('');
+            }}
           />
           <Button size="sm">Create shipment</Button>
+          {validationError ? (
+            <p className="text-red-500 text-sm">{validationError}</p>
+          ) : null}
         </div>
       </form>
     </>

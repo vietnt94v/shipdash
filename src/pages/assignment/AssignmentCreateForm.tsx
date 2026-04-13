@@ -8,11 +8,17 @@ const AssignmentCreateForm = ({ onClose }: { onClose: () => void }) => {
   const queryClient = useQueryClient();
   const [label, setLabel] = useState('');
   const [saving, setSaving] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = label.trim();
-    if (!trimmed || saving) {
+    if (!trimmed) {
+      setValidationError('Please fill in Label.');
+      return;
+    }
+    setValidationError('');
+    if (saving) {
       return;
     }
     setSaving(true);
@@ -41,12 +47,18 @@ const AssignmentCreateForm = ({ onClose }: { onClose: () => void }) => {
           placeholder="Label e.g. TX-999"
           size="sm"
           value={label}
-          onChange={(value) => setLabel(value)}
+          onChange={(value) => {
+            setLabel(value);
+            setValidationError('');
+          }}
           autoFocus
         />
         <Button size="sm" disabled={saving}>
           Create assignment
         </Button>
+        {validationError ? (
+          <p className="text-red-500 text-sm">{validationError}</p>
+        ) : null}
       </div>
     </form>
   );

@@ -109,8 +109,6 @@ const AssignmentDetailPanel = () => {
     }
   };
 
-  const closeDeleteAssignmentModal = () => setDeleteAssignmentModalOpen(false);
-
   if (!assignmentSelectedId) {
     return <div className="text-gray-500 text-sm p-2">Select an assignment.</div>;
   }
@@ -225,20 +223,18 @@ const AssignmentDetailPanel = () => {
         </div>
       </div>
       <Modal
+        title="Delete this assignment?"
         open={deleteAssignmentModalOpen}
-        onClose={closeDeleteAssignmentModal}
+        onClose={() => setDeleteAssignmentModalOpen(false)}
         onConfirm={() => void confirmDeleteAssignment()}
         confirmLabel="Delete"
         confirmVariant="danger"
         confirmDisabled={deleting}
       >
-        <div>
-          <h3 className="font-semibold text-lg">Delete this assignment?</h3>
-          <p className="text-sm text-gray-600 mt-2">
-            This will remove <span className="font-mono">{assignment.label}</span>. This cannot be
-            undone.
-          </p>
-        </div>
+        <p className="text-gray-600">
+          This will remove <span className="font-mono">{assignment.label}</span>. This cannot be
+          undone.
+        </p>
       </Modal>
     </div>
   );

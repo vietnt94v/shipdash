@@ -96,6 +96,10 @@ const ShipmentDetail = () => {
     },
   });
 
+  if (!shipmentSelectedId) {
+    return <div className="text-gray-500 text-sm p-2">Select an shipment.</div>;
+  }
+
   if (!draft?.id) {
     return null;
   }
