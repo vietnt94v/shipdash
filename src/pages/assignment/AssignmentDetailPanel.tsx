@@ -18,7 +18,7 @@ const AssignmentDetailPanel = () => {
   const { assignmentSelectedId, setAssignmentSelectedId } = useAssignmentStore();
   const { setShipmentSelectedId, shipmentSelectedId } = useShipmentStore();
   const [deleting, setDeleting] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteAssignmentModalOpen, setDeleteAssignmentModalOpen] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
   const shipmentsScrollRef = useRef<HTMLDivElement>(null);
   const shipmentsSentinelRef = useRef<HTMLDivElement>(null);
@@ -89,7 +89,7 @@ const AssignmentDetailPanel = () => {
     return () => obs.disconnect();
   }, [assignmentSelectedId, assignmentQuery.isSuccess]);
 
-  const onStatusChange = async (next: AssignmentStatus) => {
+  const updateAssignmentStatus = async (next: AssignmentStatus) => {
     if (!assignment || savingStatus) {
       return;
     }
@@ -105,18 +105,18 @@ const AssignmentDetailPanel = () => {
     }
   };
 
-  const onDeleteClick = () => {
+  const openDeleteAssignmentModal = () => {
     if (!assignment || deleting || !canDeleteAssignment) {
       return;
     }
-    setDeleteConfirmOpen(true);
+    setDeleteAssignmentModalOpen(true);
   };
 
-  const onConfirmDelete = async () => {
+  const confirmDeleteAssignment = async () => {
     if (!assignment || deleting) {
       return;
     }
-    setDeleteConfirmOpen(false);
+    setDeleteAssignmentModalOpen(false);
     setDeleting(true);
     try {
       await deleteAssignment(assignment.id);
@@ -127,6 +127,8 @@ const AssignmentDetailPanel = () => {
       setDeleting(false);
     }
   };
+
+  const closeDeleteAssignmentModal = () => setDeleteAssignmentModalOpen(false);
 
   if (!assignmentSelectedId) {
     return <div className="text-gray-500 text-sm p-2">Select an assignment.</div>;
@@ -163,7 +165,7 @@ const AssignmentDetailPanel = () => {
               size="sm"
               outline
               disabled={deleting || !canDeleteAssignment}
-              onClick={onDeleteClick}
+              onClick={openDeleteAssignmentModal}
             >
               Delete
             </Button>
@@ -175,7 +177,7 @@ const AssignmentDetailPanel = () => {
           label="Status"
           value={assignment.status}
           disabled={savingStatus}
-          onChange={(value) => void onStatusChange(value as AssignmentStatus)}
+          onChange={(value) => void updateAssignmentStatus(value as AssignmentStatus)}
         >
           {ASSIGNMENT_STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -197,7 +199,6 @@ const AssignmentDetailPanel = () => {
           <strong>{counts.delivered}</strong> DELIVERED
         </span>
       </div>
-
       <div className="flex flex-col min-h-0 flex-1">
         <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide shrink-0 p-1 border-b border-gray-300 bg-gray-200">
           Shipments · {shipments.length}
@@ -241,22 +242,20 @@ const AssignmentDetailPanel = () => {
           ) : null}
         </div>
       </div>
-
-      <Modal open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} hideCloseButton>
+      <Modal
+        open={deleteAssignmentModalOpen}
+        onClose={closeDeleteAssignmentModal}
+        onConfirm={() => void confirmDeleteAssignment()}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        confirmDisabled={deleting}
+      >
         <div>
           <h3 className="font-semibold text-lg">Delete this assignment?</h3>
           <p className="text-sm text-gray-600 mt-2">
             This will remove <span className="font-mono">{assignment.label}</span>. This cannot be
             undone.
           </p>
-          <div className="flex gap-2 justify-end mt-4">
-            <Button variant="secondary" outline onClick={() => setDeleteConfirmOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={() => void onConfirmDelete()}>
-              Delete
-            </Button>
-          </div>
         </div>
       </Modal>
     </div>

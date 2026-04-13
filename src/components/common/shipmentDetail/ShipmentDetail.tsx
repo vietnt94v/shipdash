@@ -1,226 +1,117 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { QueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { deleteShipment, getShipmentById, updateShipment } from '../../../api/shipment';
-import { getAssignments as fetchAssignments } from '../../../api/assignment';
-import { useShipmentStore } from '../../../store';
-import type { Shipment, ShipmentStatus } from '../../../types/shipment';
+import ShipmentDetailRoute from './ShipmentDetailRoute';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
-import Dropdown from '../../ui/Dropdown';
 import Input from '../../ui/Input';
-import Modal from '../../ui/Modal';
 import Select from '../../ui/Select';
-import ShipmentDetailRoute from './ShipmentDetailRoute';
+import Dropdown from '../../ui/Dropdown';
+import Modal from '../../ui/Modal';
+import { useShipmentStore } from '../../../store';
+import { getAssignments } from '../../../api/assignment';
+import { deleteShipment, getShipmentById, updateShipment } from '../../../api/shipment';
+import type { Shipment, ShipmentStatus } from '../../../types/shipment';
 
 const STATUSES: ShipmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
-const ASSIGN_LIST_SIZE = 100;
 
-export type ShipmentDetailProps = {
-  shipmentIdOverride?: string;
-  routeShipments?: Shipment[];
-  routeShipmentsPending?: boolean;
-  assignmentContext?: boolean;
-};
-
-type AssignItem = { id: string; label: string };
-type ShipmentDetailInnerProps = ShipmentDetailProps & {
-  effectiveId: string;
-};
-
-async function invalidateShipmentRelatedQueries(
-  queryClient: QueryClient,
-  opts: { assignmentContext?: boolean; assignmentId?: string | null },
-) {
-  await queryClient.invalidateQueries({ queryKey: ['shipments'] });
-  await queryClient.invalidateQueries({ queryKey: ['shipment', 'detail'] });
-  if (opts.assignmentContext) {
-    await queryClient.invalidateQueries({ queryKey: ['assignments'] });
-    await queryClient.invalidateQueries({ queryKey: ['assignment'] });
-    await queryClient.invalidateQueries({
-      queryKey: ['shipments', 'byAssignment'],
-    });
-    if (opts.assignmentId) {
-      await queryClient.invalidateQueries({
-        queryKey: ['assignmentRoute', opts.assignmentId],
-      });
-    }
-  }
-}
-
-const ShipmentDetailInner = ({
-  effectiveId,
-  routeShipments,
-  routeShipmentsPending,
-  assignmentContext,
-}: ShipmentDetailInnerProps) => {
+const ShipmentDetail = () => {
+  const { shipmentSelectedId, setShipmentSelectedId } = useShipmentStore();
   const queryClient = useQueryClient();
-  const { setShipmentSelectedId } = useShipmentStore();
+  const [deleteShipmentModalOpen, setDeleteShipmentModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [assignmentSaveError, setAssignmentSaveError] = useState(false);
   const [edits, setEdits] = useState<Partial<Shipment>>({});
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignQ, setAssignQ] = useState('');
-  const [assignQDebounced, setAssignQDebounced] = useState('');
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setAssignQDebounced(assignQ), 300);
-    return () => clearTimeout(t);
-  }, [assignQ]);
 
   const shipmentQuery = useQuery({
-    queryKey: ['shipment', 'detail', effectiveId],
-    queryFn: ({ signal }) => getShipmentById(effectiveId, signal),
+    queryKey: ['shipment', 'detail', shipmentSelectedId],
+    queryFn: () => getShipmentById(shipmentSelectedId),
+    enabled: Boolean(shipmentSelectedId),
   });
-
   const server = shipmentQuery.data;
 
-  const draft = useMemo((): Shipment | null => {
-    if (!server) {
+  useEffect(() => {
+    setEdits({});
+    setAssignOpen(false);
+    setAssignQ('');
+    setAssignmentSaveError(false);
+  }, [shipmentSelectedId]);
+
+  useEffect(() => {
+    if (!server?.id) {
+      return;
+    }
+    const status = edits.status ?? server.status;
+    const assignmentId =
+      edits.assignment_id !== undefined ? edits.assignment_id : server.assignment_id;
+    if (status === 'OPEN' || assignmentId) {
+      setAssignmentSaveError(false);
+    }
+  }, [server, edits.status, edits.assignment_id]);
+
+  const statusNow = edits.status ?? server?.status;
+  const assignQuery = useQuery({
+    queryKey: ['assignments', 'dropdown', assignOpen, assignQ],
+    queryFn: ({ signal }) =>
+      getAssignments(1, 100, { search: assignQ, signal }).then((r) => r.data),
+    enabled:
+      Boolean(shipmentSelectedId && server?.id && assignOpen) &&
+      statusNow != null &&
+      statusNow !== 'OPEN',
+  });
+
+  const draft = useMemo(() => {
+    if (!server?.id) {
       return null;
     }
     return { ...server, ...edits };
   }, [server, edits]);
 
-  const assignmentLabel = draft?.assignment_label || draft?.assignment_id || '';
-
-  const showAssignment = draft && (draft.status === 'IN_TRANSIT' || draft.status === 'DELIVERED');
-
-  const assignmentsPickQuery = useQuery({
-    queryKey: ['assignments', 'pick', assignOpen, assignQDebounced],
-    queryFn: ({ signal }) =>
-      fetchAssignments(1, ASSIGN_LIST_SIZE, {
-        search: assignQDebounced,
-        signal,
-      }).then((r) => r.data),
-    enabled: Boolean(assignOpen && showAssignment),
-  });
-
-  const assignLoading = assignmentsPickQuery.isFetching || assignmentsPickQuery.isPending;
-
-  const assignRows = assignmentsPickQuery.data ?? [];
-
-  const assignListBase = assignRows.map((a) => ({
-    id: a.id,
-    label: a.label,
-  }));
-
-  const assignItems: AssignItem[] =
-    draft?.assignment_id &&
-    assignmentLabel &&
-    !assignListBase.some((x) => x.id === draft.assignment_id)
-      ? [{ id: draft.assignment_id, label: assignmentLabel }, ...assignListBase]
-      : assignListBase;
-
-  const assignTrigger = draft?.assignment_id
-    ? assignItems.find((x) => x.id === draft.assignment_id)?.label ||
-      assignmentLabel ||
-      draft.assignment_id
-    : '';
-
-  const patchDraft = useCallback((patch: Partial<Shipment>) => {
-    setEdits((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  const setStatus = useCallback(
-    (status: ShipmentStatus) => {
-      setEdits((prev) => ({
-        ...prev,
-        status,
-        assignment_id:
-          status === 'OPEN' ? null : (prev.assignment_id ?? server?.assignment_id ?? null),
-        assignment_label:
-          status === 'OPEN' ? null : (prev.assignment_label ?? server?.assignment_label ?? null),
-      }));
+  const persistShipmentUpdates = useCallback(
+    async (shipment: Shipment) => {
+      if (shipment.status !== 'OPEN' && !shipment.assignment_id) {
+        setAssignmentSaveError(true);
+        return;
+      }
+      setSaving(true);
+      try {
+        const updated = await updateShipment(shipment.id, shipment);
+        queryClient.setQueryData<Shipment>(['shipment', 'detail', shipment.id], updated);
+        setEdits({});
+      } finally {
+        setSaving(false);
+      }
     },
-    [server?.assignment_id, server?.assignment_label],
+    [queryClient],
   );
 
-  const onAssignOpenChange = useCallback((open: boolean) => {
-    setAssignOpen(open);
-    if (open) {
-      setAssignQ('');
-      setAssignQDebounced('');
-    }
-  }, []);
-
-  const saveMutation = useMutation({
-    mutationFn: (s: Shipment) => updateShipment(s.id, s),
-    onSuccess: async (_data, variables) => {
-      await invalidateShipmentRelatedQueries(queryClient, {
-        assignmentContext,
-        assignmentId: variables.assignment_id,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['shipment', 'detail', variables.id],
-      });
+  const deleteShipmentMutation = useMutation({
+    mutationFn: deleteShipment,
+    onSuccess: async (_data, shipmentId) => {
+      await queryClient.invalidateQueries({ queryKey: ['shipments'] });
+      await queryClient.invalidateQueries({ queryKey: ['shipment', 'detail'] });
+      queryClient.removeQueries({ queryKey: ['shipment', 'detail', shipmentId] });
       setShipmentSelectedId('');
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (vars: { id: string; assignmentId?: string | null }) => deleteShipment(vars.id),
-    onSuccess: async (_data, variables) => {
-      await invalidateShipmentRelatedQueries(queryClient, {
-        assignmentContext,
-        assignmentId: variables.assignmentId,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['shipment', 'detail', variables.id],
-      });
-      setShipmentSelectedId('');
-    },
-  });
-
-  const save = useCallback(() => {
-    if (!draft) {
-      return;
-    }
-    if (draft.status !== 'OPEN' && !draft.assignment_id) {
-      alert('Please select an assignment');
-      return;
-    }
-    saveMutation.mutate(draft);
-  }, [draft, saveMutation]);
-
-  const onDeleteClick = useCallback(() => {
-    if (!draft || deleteMutation.isPending || draft.status !== 'OPEN') {
-      return;
-    }
-    setDeleteConfirmOpen(true);
-  }, [draft, deleteMutation.isPending]);
-
-  const onConfirmDelete = useCallback(() => {
-    if (!draft || deleteMutation.isPending || draft.status !== 'OPEN') {
-      return;
-    }
-    setDeleteConfirmOpen(false);
-    deleteMutation.mutate({
-      id: draft.id,
-      assignmentId: draft.assignment_id,
-    });
-  }, [draft, deleteMutation]);
-
-  const ready = shipmentQuery.isSuccess && draft !== null && draft.id === effectiveId;
-
-  const canDeleteShipment = draft?.status === 'OPEN';
-
-  const ap = {
-    open: assignOpen,
-    onOpenChange: onAssignOpenChange,
-    searchValue: assignQ,
-    onSearchChange: setAssignQ,
-    items: assignItems,
-    loading: assignLoading,
-    triggerLabel: assignTrigger,
-    onSelect: (item: AssignItem) => {
-      patchDraft({ assignment_id: item.id, assignment_label: item.label });
-    },
-  };
-
-  if (!ready || !draft) {
+  if (!draft?.id) {
     return null;
   }
+
+  const canDeleteShipment = draft.status === 'OPEN';
+
+  const confirmDeleteShipment = () => {
+    if (!draft.id || !canDeleteShipment || deleteShipmentMutation.isPending) {
+      return;
+    }
+    setDeleteShipmentModalOpen(false);
+    deleteShipmentMutation.mutate(draft.id);
+  };
+
+  const closeDeleteShipmentModal = () => setDeleteShipmentModalOpen(false);
 
   return (
     <>
@@ -242,26 +133,17 @@ const ShipmentDetailInner = ({
                 }
                 hasAnchor
               >
-                {draft.status.replace('_', ' ')}
+                {(draft.status ?? '').replace(/_/g, ' ')}
               </Badge>
               <div className="flex flex-col items-end gap-1 shrink-0 max-w-48">
-                <span
-                  className="inline-block"
-                  title={
-                    !canDeleteShipment
-                      ? 'Only shipments with status OPEN can be deleted.'
-                      : undefined
-                  }
+                <Button
+                  variant="danger"
+                  outline
+                  disabled={!canDeleteShipment || deleteShipmentMutation.isPending}
+                  onClick={() => setDeleteShipmentModalOpen(true)}
                 >
-                  <Button
-                    variant="danger"
-                    outline
-                    disabled={deleteMutation.isPending || !canDeleteShipment}
-                    onClick={onDeleteClick}
-                  >
-                    Delete
-                  </Button>
-                </span>
+                  Delete
+                </Button>
               </div>
             </div>
           </div>
@@ -291,7 +173,7 @@ const ShipmentDetailInner = ({
               id="delivery_by_date"
               type="date"
               value={dayjs(draft.delivery_by_date).format('YYYY-MM-DD')}
-              onChange={(value) => patchDraft({ delivery_by_date: value })}
+              onChange={(value) => setEdits((prev) => ({ ...prev, delivery_by_date: value }))}
             />
           </div>
           <div className="flex gap-3">
@@ -300,8 +182,8 @@ const ShipmentDetailInner = ({
                 label="Latitude"
                 id="lat"
                 type="number"
-                value={draft.lat.toString()}
-                onChange={(value) => patchDraft({ lat: parseFloat(value) })}
+                value={draft.lat != null ? String(draft.lat) : ''}
+                onChange={(value) => setEdits((prev) => ({ ...prev, lat: parseFloat(value) }))}
               />
             </div>
             <div className="flex-1">
@@ -309,8 +191,8 @@ const ShipmentDetailInner = ({
                 label="Longitude"
                 id="lng"
                 type="number"
-                value={draft.lng.toString()}
-                onChange={(value) => patchDraft({ lng: parseFloat(value) })}
+                value={draft.lng != null ? String(draft.lng) : ''}
+                onChange={(value) => setEdits((prev) => ({ ...prev, lng: parseFloat(value) }))}
               />
             </div>
           </div>
@@ -318,8 +200,15 @@ const ShipmentDetailInner = ({
             <div className="block">
               <Select
                 label="Status"
-                value={draft.status}
-                onChange={(value) => setStatus(value as ShipmentStatus)}
+                value={draft.status ?? STATUSES[0]}
+                onChange={(value) => {
+                  const status = value as ShipmentStatus;
+                  setEdits((prev) => ({
+                    ...prev,
+                    status,
+                    ...(status === 'OPEN' ? { assignment_id: null, assignment_label: null } : {}),
+                  }));
+                }}
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -328,79 +217,65 @@ const ShipmentDetailInner = ({
                 ))}
               </Select>
             </div>
-            {showAssignment && (
+            {draft.status !== 'OPEN' && (
               <div className="mt-3 block">
-                <p className="field-label">Assignment ID</p>
+                <p className="field-label">Assignment</p>
                 <Dropdown
-                  open={ap.open}
-                  onOpenChange={ap.onOpenChange}
+                  open={assignOpen}
+                  onOpenChange={(open) => {
+                    setAssignOpen(open);
+                    if (open) {
+                      setAssignQ('');
+                    }
+                  }}
                   placeholder="— Select assignment —"
-                  triggerLabel={ap.triggerLabel}
-                  searchValue={ap.searchValue}
-                  onSearchChange={ap.onSearchChange}
-                  items={ap.items}
-                  loading={ap.loading}
+                  triggerLabel={draft.assignment_label || draft.assignment_id || ''}
+                  searchValue={assignQ}
+                  onSearchChange={setAssignQ}
+                  items={(assignQuery.data ?? []).map((a) => ({
+                    id: a.id,
+                    label: a.label,
+                  }))}
+                  loading={assignQuery.isPending || assignQuery.isFetching}
                   hasMore={false}
-                  onSelectItem={ap.onSelect}
+                  onSelectItem={(item) =>
+                    setEdits((prev) => ({
+                      ...prev,
+                      assignment_id: item.id,
+                      assignment_label: item.label,
+                    }))
+                  }
                 />
+                {assignmentSaveError && (
+                  <p className="text-sm text-red-500 mt-2">Please select an assignment</p>
+                )}
               </div>
             )}
             <div className="mt-4">
-              <Button disabled={saveMutation.isPending} onClick={() => void save()}>
+              <Button disabled={saving} onClick={() => void persistShipmentUpdates(draft)}>
                 Save change
               </Button>
             </div>
           </div>
-        </div>
-        <ShipmentDetailRoute
-          assignmentContext={assignmentContext}
-          routeShipmentsPending={routeShipmentsPending}
-          routeShipments={routeShipments}
-          shipment={draft}
-        />
-      </div>
-      <Modal open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} hideCloseButton>
-        <div>
-          <h3 className="font-semibold text-lg">Delete this shipment?</h3>
-          <p className="text-sm text-gray-600 mt-2">
-            This will remove <span className="font-mono">{draft.label}</span>. This cannot be
-            undone.
-          </p>
-          <div className="flex gap-2 justify-end mt-4">
-            <Button variant="secondary" outline onClick={() => setDeleteConfirmOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={onConfirmDelete}>
-              Delete
-            </Button>
+          <div className="block">
+            <ShipmentDetailRoute shipment={draft} />
           </div>
         </div>
+      </div>
+      <Modal
+        title="Delete this shipment?"
+        open={deleteShipmentModalOpen}
+        onClose={closeDeleteShipmentModal}
+        onConfirm={confirmDeleteShipment}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        confirmDisabled={!canDeleteShipment || deleteShipmentMutation.isPending}
+      >
+        <p className="text-gray-600">
+          This will remove <span className="font-mono">{draft.label}</span>. This cannot be undone.
+        </p>
       </Modal>
     </>
-  );
-};
-
-const ShipmentDetail = ({
-  shipmentIdOverride,
-  routeShipments,
-  routeShipmentsPending,
-  assignmentContext,
-}: ShipmentDetailProps = {}) => {
-  const { shipmentSelectedId } = useShipmentStore();
-  const effectiveId = shipmentIdOverride !== undefined ? shipmentIdOverride : shipmentSelectedId;
-
-  if (!effectiveId) {
-    return null;
-  }
-
-  return (
-    <ShipmentDetailInner
-      key={effectiveId}
-      effectiveId={effectiveId}
-      routeShipments={routeShipments}
-      routeShipmentsPending={routeShipmentsPending}
-      assignmentContext={assignmentContext}
-    />
   );
 };
 

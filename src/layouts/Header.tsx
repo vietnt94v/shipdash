@@ -8,7 +8,9 @@ const Header = () => {
           <li>
             <NavLink
               to="/shipment"
-              className={({ isActive }) => `font-bold py-4 px-2 ${isActive ? 'text-green-500/70' : ''}`}
+              className={({ isActive }) =>
+                `font-bold py-4 px-2 ${isActive ? 'text-black' : 'text-black/50'}`
+              }
             >
               Shipment
             </NavLink>
@@ -16,7 +18,9 @@ const Header = () => {
           <li>
             <NavLink
               to="/assignment"
-              className={({ isActive }) => `font-bold py-4 px-2 ${isActive ? 'text-green-500/70' : ''}`}
+              className={({ isActive }) =>
+                `font-bold py-4 px-2 ${isActive ? 'text-black' : 'text-black/50'}`
+              }
             >
               Assignment
             </NavLink>

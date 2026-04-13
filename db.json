@@ -32,13 +32,13 @@
       "id": "shp_003",
       "client_name": "CargoTrans",
       "label": "SFO-581-250523-3",
-      "status": "OPEN",
+      "status": "IN_TRANSIT",
       "arrival_date": "2026-04-08T10:11:25.858Z",
       "delivery_by_date": "2026-04-10T10:11:25.858Z",
       "eta": "2026-04-09T19:11:25.858Z",
       "warehouse_id": "581",
-      "assignment_id": null,
-      "assignment_label": null,
+      "assignment_id": "as_002",
+      "assignment_label": "TX-002",
       "lat": 32.793374087224095,
       "lng": -97.0287584945382
     },
@@ -93,8 +93,8 @@
       "delivery_by_date": "2026-04-05T10:11:25.858Z",
       "eta": "2026-04-04T22:11:25.858Z",
       "warehouse_id": "581",
-      "assignment_id": "as_004",
-      "assignment_label": "LAX-A2",
+      "assignment_id": "as_003",
+      "assignment_label": "LAX-A1",
       "lat": 32.78931951964071,
       "lng": -96.73135726211237
     },
@@ -111,20 +111,6 @@
       "assignment_label": "EWR-B1",
       "lat": 33.00088925495149,
       "lng": -96.73706948283473
-    },
-    {
-      "id": "shp_009",
-      "client_name": "DHL",
-      "label": "SEA-581-250529-9",
-      "status": "OPEN",
-      "arrival_date": "2026-04-10T10:11:25.858Z",
-      "delivery_by_date": "2026-04-12T10:11:25.858Z",
-      "eta": "2026-04-12T02:11:25.858Z",
-      "warehouse_id": "581",
-      "assignment_id": null,
-      "assignment_label": null,
-      "lat": 32.97353899753843,
-      "lng": -97.36415195110578
     },
     {
       "id": "shp_010",
@@ -153,20 +139,6 @@
       "assignment_label": "EWR-B1",
       "lat": 32.82219959711087,
       "lng": -96.9981522076632
-    },
-    {
-      "id": "shp_012",
-      "client_name": "Logix",
-      "label": "JFK-581-250522-12",
-      "status": "OPEN",
-      "arrival_date": "2026-04-11T10:11:25.858Z",
-      "delivery_by_date": "2026-04-13T10:11:25.858Z",
-      "eta": "2026-04-12T22:11:25.858Z",
-      "warehouse_id": "581",
-      "assignment_id": null,
-      "assignment_label": null,
-      "lat": 32.83193022675981,
-      "lng": -97.3409539304084
     },
     {
       "id": "shp_013",
@@ -237,20 +209,6 @@
       "assignment_label": "EWR-B1",
       "lat": 32.59320945139494,
       "lng": -96.81275258014604
-    },
-    {
-      "id": "shp_018",
-      "client_name": "ShipCo",
-      "label": "SFO-581-250528-18",
-      "status": "OPEN",
-      "arrival_date": "2026-04-09T10:11:25.858Z",
-      "delivery_by_date": "2026-04-11T10:11:25.858Z",
-      "eta": "2026-04-09T14:11:25.858Z",
-      "warehouse_id": "581",
-      "assignment_id": null,
-      "assignment_label": null,
-      "lat": 32.77819931521837,
-      "lng": -97.31499913759492
     },
     {
       "id": "shp_019",

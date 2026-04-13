@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ShipmentAddForm from './ShipmentAddForm';
 import ShipmentList from './ShipmentList';
-import ShipmentDetail from '../../components/common/shipmentDetail2/ShipmentDetail';
+import ShipmentDetail from '../../components/common/shipmentDetail/ShipmentDetail';
 import Button from '../../components/ui/Button';
 
 const Shipments = () => {
