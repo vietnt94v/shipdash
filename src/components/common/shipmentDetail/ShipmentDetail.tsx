@@ -54,8 +54,7 @@ const ShipmentDetail = () => {
   const statusNow = edits.status ?? server?.status;
   const assignQuery = useQuery({
     queryKey: ['assignments', 'dropdown', assignOpen, assignQ],
-    queryFn: ({ signal }) =>
-      getAssignments(1, 100, { search: assignQ, signal }).then((r) => r.data),
+    queryFn: ({ signal }) => getAssignments(1, 20, { search: assignQ, signal }).then((r) => r.data),
     enabled:
       Boolean(shipmentSelectedId && server?.id && assignOpen) &&
       statusNow != null &&
@@ -110,8 +109,6 @@ const ShipmentDetail = () => {
     setDeleteShipmentModalOpen(false);
     deleteShipmentMutation.mutate(draft.id);
   };
-
-  const closeDeleteShipmentModal = () => setDeleteShipmentModalOpen(false);
 
   return (
     <>
@@ -265,7 +262,7 @@ const ShipmentDetail = () => {
       <Modal
         title="Delete this shipment?"
         open={deleteShipmentModalOpen}
-        onClose={closeDeleteShipmentModal}
+        onClose={() => setDeleteShipmentModalOpen(false)}
         onConfirm={confirmDeleteShipment}
         confirmLabel="Delete"
         confirmVariant="danger"

@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteAssignment, getAssignmentById, updateAssignment } from '../../api/assignment';
+import { deleteAssignment, getAssignmentById } from '../../api/assignment';
 import { getShipmentsByAssignmentId } from '../../api/shipment';
 import { useAssignmentStore, useShipmentStore } from '../../store';
-import type { Assignment, AssignmentStatus } from '../../types/assignment';
+import type { Assignment } from '../../types/assignment';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
-import Select from '../../components/ui/Select';
 import CardItem from '../../components/common/CardItem';
 import Badge from '../../components/ui/Badge';
 
 const PAGE_SIZE = 15;
-const ASSIGNMENT_STATUSES: AssignmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 
 const AssignmentDetailPanel = () => {
   const queryClient = useQueryClient();
@@ -19,7 +17,6 @@ const AssignmentDetailPanel = () => {
   const { setShipmentSelectedId, shipmentSelectedId } = useShipmentStore();
   const [deleting, setDeleting] = useState(false);
   const [deleteAssignmentModalOpen, setDeleteAssignmentModalOpen] = useState(false);
-  const [savingStatus, setSavingStatus] = useState(false);
   const shipmentsScrollRef = useRef<HTMLDivElement>(null);
   const shipmentsSentinelRef = useRef<HTMLDivElement>(null);
 
@@ -89,22 +86,6 @@ const AssignmentDetailPanel = () => {
     return () => obs.disconnect();
   }, [assignmentSelectedId, assignmentQuery.isSuccess]);
 
-  const updateAssignmentStatus = async (next: AssignmentStatus) => {
-    if (!assignment || savingStatus) {
-      return;
-    }
-    setSavingStatus(true);
-    try {
-      await updateAssignment(assignment.id, { ...assignment, status: next });
-      await queryClient.invalidateQueries({ queryKey: ['assignments'] });
-      await queryClient.invalidateQueries({
-        queryKey: ['assignment', assignment.id],
-      });
-    } finally {
-      setSavingStatus(false);
-    }
-  };
-
   const openDeleteAssignmentModal = () => {
     if (!assignment || deleting || !canDeleteAssignment) {
       return;
@@ -173,18 +154,19 @@ const AssignmentDetailPanel = () => {
         </div>
       </div>
       <div className="shrink-0 p-3 border-b border-gray-300">
-        <Select
-          label="Status"
-          value={assignment.status}
-          disabled={savingStatus}
-          onChange={(value) => void updateAssignmentStatus(value as AssignmentStatus)}
+        <p className="field-label mb-1">Status</p>
+        <Badge
+          variant={
+            assignment.status === 'OPEN'
+              ? 'primary'
+              : assignment.status === 'IN_TRANSIT'
+                ? 'warning'
+                : 'success'
+          }
+          hasAnchor
         >
-          {ASSIGNMENT_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s.replace('_', ' ')}
-            </option>
-          ))}
-        </Select>
+          {assignment.status.replace('_', ' ')}
+        </Badge>
       </div>
       <div className="flex gap-2 text-sm shrink-0 flex-wrap p-3 border-b border-gray-300">
         <span className="text-gray-600">
