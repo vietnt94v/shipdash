@@ -1,75 +1,33 @@
-# React + TypeScript + Vite
+# Shipdash
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React (Vite) dashboard for **shipments** and **assignments** (lists, forms, Leaflet map). Data: **`db.json`** + **[json-server](https://github.com/typicode/json-server)** on **port 3001**.
 
-Currently, two official plugins are available:
+## Current limitations
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Virtualization** — Shipment and assignment lists are not virtualized; large lists may be slow.
+- **Leaflet** — Map UI was built with **heavy AI help**; limited hands-on study of the library.
+- **`generated-data.cjs`** — Tweaked from an earlier seed script so **`db.json`** matches the app schema; adjust and re-run if models change.
+- **Vite + `db.json`** — Vite watches the repo; json-server **rewrites `db.json` on each API write**, which can **reload the dev UI** and feel janky. Prefer **`db.json` outside the project** (e.g. `../shipdash-data/db.json`) and run `pnpm exec json-server --watch <that-path> --port 3001`; copy there after `node generated-data.cjs` if needed.
+- **Toasts** — No **Toast** component yet for create/update/delete feedback.
 
-## React Compiler
+**Stack:** React 19, TS, Vite, Tailwind, TanStack Query, Zustand, React Router, Leaflet / react-leaflet.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Setup
 
-Note: This will impact Vite dev & build performances.
+**Prerequisites:** Node (LTS), **pnpm**.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+pnpm install
+node generated-data.cjs   # optional: (re)builds ./db.json
+pnpm api                  # json-server → http://localhost:3001  (see src/api/index.ts)
+pnpm dev                  # http://localhost:5173
+# or: pnpm dev:all
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**Build:** `pnpm build` · `pnpm preview`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+## Demo
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+![Shipment](docs/demo/shipment-view.png)
+![Assignment](docs/demo/assignment-view.png)
+![Delete assignment](docs/demo/assignment-delete-modal.png)
