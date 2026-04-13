@@ -15,7 +15,17 @@ import type { Shipment, ShipmentStatus } from '../../../types/shipment';
 
 const STATUSES: ShipmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 
-const ShipmentDetail = () => {
+type ShipmentDetailProps = {
+  assignmentContext?: boolean;
+  routeShipmentsPending?: boolean;
+  routeShipments?: Shipment[];
+};
+
+const ShipmentDetail = ({
+  assignmentContext,
+  routeShipmentsPending,
+  routeShipments,
+}: ShipmentDetailProps) => {
   const { shipmentSelectedId, setShipmentSelectedId } = useShipmentStore();
   const queryClient = useQueryClient();
   const [deleteShipmentModalOpen, setDeleteShipmentModalOpen] = useState(false);
@@ -259,7 +269,12 @@ const ShipmentDetail = () => {
             </div>
           </div>
           <div className="block">
-            <ShipmentDetailRoute shipment={draft} />
+            <ShipmentDetailRoute
+              shipment={draft}
+              assignmentContext={assignmentContext}
+              routeShipmentsPending={routeShipmentsPending}
+              routeShipments={routeShipments}
+            />
           </div>
         </div>
       </div>

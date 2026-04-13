@@ -42,7 +42,7 @@ const AssignmentCreateForm = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)}>
-      <div className="flex flex-col border-b border-gray-300 gap-2 p-3">
+      <div className="flex flex-col border-b border-gray-300 gap-2 p-3 bg-gray-200">
         <Input
           placeholder="Label e.g. TX-999"
           size="sm"
