@@ -21,8 +21,12 @@ const assignmentDefs = [
   { id: 'as_005', label: 'EWR-B1', status: 'DELIVERED' },
 ];
 
-const transitPool = ['as_001', 'as_002', 'as_003', 'as_004'];
-const deliveredPool = ['as_005'];
+const transitPool = assignmentDefs
+  .filter((a) => a.status === 'IN_TRANSIT')
+  .map((a) => a.id);
+const deliveredPool = assignmentDefs
+  .filter((a) => a.status === 'DELIVERED')
+  .map((a) => a.id);
 
 const assignmentLabelById = Object.fromEntries(
   assignmentDefs.map((a) => [a.id, a.label]),
