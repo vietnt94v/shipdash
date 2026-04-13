@@ -9,8 +9,8 @@
       "delivery_by_date": "2026-04-12T10:11:25.858Z",
       "eta": "2026-04-12T05:11:25.858Z",
       "warehouse_id": "581",
-      "assignment_id": "as_002",
-      "assignment_label": "TX-002",
+      "assignment_id": "as_001",
+      "assignment_label": "TX-001",
       "lat": 32.56655339165565,
       "lng": -96.9838063922152
     },
@@ -74,13 +74,13 @@
       "id": "shp_006",
       "client_name": "Oceanic",
       "label": "LAX-581-250526-6",
-      "status": "OPEN",
+      "status": "IN_TRANSIT",
       "arrival_date": "2026-04-05T10:11:25.858Z",
       "delivery_by_date": "2026-04-07T10:11:25.858Z",
       "eta": "2026-04-06T19:11:25.858Z",
       "warehouse_id": "581",
-      "assignment_id": null,
-      "assignment_label": null,
+      "assignment_id": "as_001",
+      "assignment_label": "TX-001",
       "lat": 33.02528922305196,
       "lng": -97.17695570677114
     },
@@ -1477,5 +1477,6 @@
       ],
       "shipment_count": 33
     }
-  ]
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
 }

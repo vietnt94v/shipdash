@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Badge from '../../ui/Badge';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -7,19 +7,23 @@ import Dropdown from '../../ui/Dropdown';
 import Modal from '../../ui/Modal';
 import dayjs from 'dayjs';
 import { useShipmentStore } from '../../../store';
-import { getShipmentById } from '../../../api/shipment';
+import { getShipmentById, updateShipment } from '../../../api/shipment';
 import { getAssignments } from '../../../api/assignment';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Shipment, ShipmentStatus } from '../../../types/shipment';
 
 const STATUSES: ShipmentStatus[] = ['OPEN', 'IN_TRANSIT', 'DELIVERED'];
 
 const ShipmentDetail = () => {
   const { shipmentSelectedId } = useShipmentStore();
+  const queryClient = useQueryClient();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [assignmentSaveError, setAssignmentSaveError] = useState(false);
   const [edits, setEdits] = useState<Partial<Shipment>>({});
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignQ, setAssignQ] = useState('');
+
   const shipmentQuery = useQuery({
     queryKey: ['shipment', 'detail', shipmentSelectedId],
     queryFn: () => getShipmentById(shipmentSelectedId),
@@ -31,7 +35,20 @@ const ShipmentDetail = () => {
     setEdits({});
     setAssignOpen(false);
     setAssignQ('');
+    setAssignmentSaveError(false);
   }, [shipmentSelectedId]);
+
+  useEffect(() => {
+    if (!server?.id) {
+      return;
+    }
+    const status = edits.status ?? server.status;
+    const assignmentId =
+      edits.assignment_id !== undefined ? edits.assignment_id : server.assignment_id;
+    if (status === 'OPEN' || assignmentId) {
+      setAssignmentSaveError(false);
+    }
+  }, [server, edits.status, edits.assignment_id]);
 
   const statusNow = edits.status ?? server?.status;
   const assignQuery = useQuery({
@@ -50,6 +67,27 @@ const ShipmentDetail = () => {
     }
     return { ...server, ...edits };
   }, [server, edits]);
+
+  const handleSaveShipment = useCallback(
+    async (shipment: Shipment) => {
+      if (shipment.status !== 'OPEN' && !shipment.assignment_id) {
+        setAssignmentSaveError(true);
+        return;
+      }
+      setSaving(true);
+      try {
+        const updated = await updateShipment(shipment.id, shipment);
+        queryClient.setQueryData<Shipment>(
+          ['shipment', 'detail', shipment.id],
+          updated,
+        );
+        setEdits({});
+      } finally {
+        setSaving(false);
+      }
+    },
+    [queryClient],
+  );
 
   if (!draft?.id) {
     return null;
@@ -152,9 +190,7 @@ const ShipmentDetail = () => {
                   setEdits((prev) => ({
                     ...prev,
                     status,
-                    ...(status === 'OPEN'
-                      ? { assignment_id: null, assignment_label: null }
-                      : {}),
+                    ...(status === 'OPEN' ? { assignment_id: null, assignment_label: null } : {}),
                   }));
                 }}
               >
@@ -177,9 +213,7 @@ const ShipmentDetail = () => {
                     }
                   }}
                   placeholder="— Select assignment —"
-                  triggerLabel={
-                    draft.assignment_label || draft.assignment_id || ''
-                  }
+                  triggerLabel={draft.assignment_label || draft.assignment_id || ''}
                   searchValue={assignQ}
                   onSearchChange={setAssignQ}
                   items={(assignQuery.data ?? []).map((a) => ({
@@ -196,10 +230,17 @@ const ShipmentDetail = () => {
                     }))
                   }
                 />
+                {assignmentSaveError && (
+                  <p className="text-sm text-red-500 mt-2">
+                    Please select an assignment
+                  </p>
+                )}
               </div>
             )}
             <div className="mt-4">
-              <Button>Save change</Button>
+              <Button disabled={saving} onClick={() => handleSaveShipment(draft)}>
+                Save change
+              </Button>
             </div>
           </div>
         </div>
